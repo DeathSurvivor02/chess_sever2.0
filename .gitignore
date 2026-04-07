@@ -1,0 +1,12 @@
+# ── Build output ──────────────────────────────────────────────
+*.exe
+*.o
+*.a
+
+# ── Raylib library (downloaded locally, not committed) ────────
+raylib/
+
+# ── Editor / OS artifacts ─────────────────────────────────────
+.vscode/
+*.DS_Store
+Thumbs.db
