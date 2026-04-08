@@ -16,41 +16,24 @@ jobs:
         with:
           version: 3.1.64
 
-      - name: Cache Raylib
-        id: cache-raylib
-        uses: actions/cache@v3
-        with:
-          path: raylib-web
-          key: raylib-web-5.5
-
-      - name: Build Raylib for Web
-        if: steps.cache-raylib.outputs.cache-hit != 'true'
+      - name: Configure and Build (CMake)
         run: |
-          git clone --depth 1 https://github.com/raysan5/raylib.git raylib-src
-          cd raylib-src/src
-          emmake make PLATFORM=PLATFORM_WEB -j$(nproc)
-          mkdir -p ../../raylib-web/include
-          mkdir -p ../../raylib-web/lib
-          cp raylib.h ../../raylib-web/include/
-          cp raymath.h ../../raylib-web/include/
-          cp rlgl.h ../../raylib-web/include/
-          cp libraylib.a ../../raylib-web/lib/
-          cd ../..
-          rm -rf raylib-src
+          mkdir build
+          cd build
+          emcmake cmake ..
+          emmake make -j$(nproc)
 
-      - name: Build Chess Game
+      - name: Prepare Deployment
         run: |
-          emcc -o index.html src/main.c src/board.c src/render.c \
-          -I raylib-web/include -L raylib-web/lib -lraylib \
-          --shell-file src/minshell.html \
-          --preload-file src/ \
-          -s USE_GLFW=3 -s ASYNCIFY -DPLATFORM_WEB \
-          -O3
+          mkdir -p deploy
+          cp build/chess_game.html deploy/index.html
+          cp build/chess_game.js deploy/index.js
+          cp build/chess_game.wasm deploy/index.wasm
+          cp build/chess_game.data deploy/index.data || true
 
       - name: Deploy to Build Branch
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
+          publish_dir: deploy
           publish_branch: build
-          exclude_assets: '.github,raylib,obj,bin,.vscode,Makefile,LICENSE,README.md,src,*.exe,vercel.json,package.json,package-lock.json'
