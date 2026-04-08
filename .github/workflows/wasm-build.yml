@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup Emscripten
-        uses: emscripten-core/setup-emscripten@v11
+        uses: mymindstorm/setup-emsdk@v14
         with:
           version: 3.1.64
 
@@ -28,7 +28,7 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/raysan5/raylib.git raylib-src
           cd raylib-src/src
-          make PLATFORM=PLATFORM_WEB -j$(nproc)
+          emmake make PLATFORM=PLATFORM_WEB -j$(nproc)
           mkdir -p ../../raylib-web/include
           mkdir -p ../../raylib-web/lib
           cp raylib.h ../../raylib-web/include/
