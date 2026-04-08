@@ -1,0 +1,56 @@
+name: Build and Deploy Chess Wasm
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v11
+        with:
+          version: 3.1.64
+
+      - name: Cache Raylib
+        id: cache-raylib
+        uses: actions/cache@v3
+        with:
+          path: raylib-web
+          key: raylib-web-5.5
+
+      - name: Build Raylib for Web
+        if: steps.cache-raylib.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 https://github.com/raysan5/raylib.git raylib-src
+          cd raylib-src/src
+          make PLATFORM=PLATFORM_WEB -j$(nproc)
+          mkdir -p ../../raylib-web/include
+          mkdir -p ../../raylib-web/lib
+          cp raylib.h ../../raylib-web/include/
+          cp raymath.h ../../raylib-web/include/
+          cp rlgl.h ../../raylib-web/include/
+          cp libraylib.a ../../raylib-web/lib/
+          cd ../..
+          rm -rf raylib-src
+
+      - name: Build Chess Game
+        run: |
+          emcc -o index.html src/main.c src/board.c src/render.c \
+          -I raylib-web/include -L raylib-web/lib -lraylib \
+          -s USE_GLFW=3 -s ASYNCIFY -DPLATFORM_WEB \
+          --shell-file src/minshell.html \
+          --preload-file src/ \
+          -O3
+
+      - name: Deploy to Build Branch
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          publish_branch: build
+          exclude_assets: '.github,raylib,obj,bin,.vscode,Makefile,LICENSE,README.md,src,*.exe,vercel.json,package.json,package-lock.json'
