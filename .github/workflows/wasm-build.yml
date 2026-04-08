@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup Emscripten
-        uses: mymindstorm/setup-emsdk@v11
+        uses: emscripten-core/setup-emscripten@v11
         with:
           version: 3.1.64
 
@@ -42,9 +42,9 @@ jobs:
         run: |
           emcc -o index.html src/main.c src/board.c src/render.c \
           -I raylib-web/include -L raylib-web/lib -lraylib \
-          -s USE_GLFW=3 -s ASYNCIFY -DPLATFORM_WEB \
           --shell-file src/minshell.html \
           --preload-file src/ \
+          -s USE_GLFW=3 -s ASYNCIFY -DPLATFORM_WEB \
           -O3
 
       - name: Deploy to Build Branch
